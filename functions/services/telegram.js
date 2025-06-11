@@ -25,8 +25,8 @@ async function handleTelegramWebhook(req, res) {
     const message = req.body?.message;
     const callback = req.body?.callback_query;
     const allowedChats = process.env.TELEGRAM_ALLOWED_CHAT;
-    console.log("message", message);
     const chatId = message?.chat?.id || callback?.message?.chat?.id;
+    console.log("message", chatId, message);
     if (!allowedChats.includes(chatId)) {
       console.log(`⛔ Запит з chatId ${chatId} відхилено`);
       return res.status(200).send("Chat not allowed");

@@ -2,3 +2,5 @@ node_modules/
 functions/node_modules/
 *.local
 functions/.env
+/.env.local
+/.env.test
