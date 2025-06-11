@@ -9,7 +9,9 @@ const {
   isBotActive,
 } = require("./notion");
 
-const openai = new OpenAI({apiKey: process.env.OPENAI_API_KEY});
+function getOpenAIClient() {
+  return new OpenAI({apiKey: process.env.OPENAI_API_KEY});
+}
 
 async function sendMessage(chatId, text) {
   await axios.post(`https://api.telegram.org/bot${process.env.TELEGRAM_BOT_TOKEN}/sendMessage`, {
@@ -163,6 +165,7 @@ async function handleTelegramWebhook(req, res) {
     }
 
     if (message) {
+      const openai = getOpenAIClient();
       const thread = await openai.beta.threads.create();
       await openai.beta.threads.messages.create(thread.id, {
         role: "user",

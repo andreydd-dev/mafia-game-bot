@@ -1,7 +1,9 @@
 // services/openai.js
 const {OpenAI} = require("openai");
 
-const openai = new OpenAI({apiKey: process.env.OPENAI_API_KEY});
+function getOpenAIClient() {
+  return new OpenAI({apiKey: process.env.OPENAI_API_KEY});
+}
 
 /**
  * Запускає асистента і повертає результат
@@ -9,6 +11,7 @@ const openai = new OpenAI({apiKey: process.env.OPENAI_API_KEY});
  * @returns {Promise<any>}
  */
 async function runAssistant(messageFull) {
+  const openai = getOpenAIClient();
   const thread = await openai.beta.threads.create();
 
   await openai.beta.threads.messages.create(thread.id, {
