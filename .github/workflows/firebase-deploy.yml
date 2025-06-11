@@ -39,12 +39,37 @@ jobs:
       - name: 🚀 Deploy to Firebase
         run: |
           cd functions
+
           if [[ "${{ github.ref }}" == "refs/heads/dev" ]]; then
+            export NOTION_DB_ID="${{ secrets.NOTION_DB_ID_TEST }}"
+            export NOTION_DB_ID_PLAYERS="${{ secrets.NOTION_DB_ID_PLAYERS_TEST }}"
+            export NOTION_DB_ID_SIGNUPS="${{ secrets.NOTION_DB_ID_SIGNUPS_TEST }}"
+            export NOTION_DB_ID_GAME_METADATA="${{ secrets.NOTION_DB_ID_GAME_METADATA_TEST }}"
+            export NOTION_DB_ID_BOT_STATE="${{ secrets.NOTION_DB_ID_BOT_STATE_TEST }}"
+            export TELEGRAM_BOT_TOKEN="${{ secrets.TELEGRAM_BOT_TOKEN_TEST }}"
+            export BOT_ADMINS="${{ secrets.BOT_ADMINS_TEST }}"
+            export TELEGRAM_ADMIN_ID="${{ secrets.TELEGRAM_ADMIN_ID_TEST }}"
+            export TELEGRAM_BOT_ADMIN="${{ secrets.TELEGRAM_BOT_ADMIN_TEST }}"
+            export TELEGRAM_ALLOWED_CHAT="${{ secrets.TELEGRAM_ALLOWED_CHAT_TEST }}"
             firebase deploy --only functions \
               --project "${{ secrets.FIREBASE_PROJECT_ID_TEST }}" \
               --token "${{ secrets.FIREBASE_DEPLOY_TOKEN }}"
           else
+            export NOTION_DB_ID="${{ secrets.NOTION_DB_ID_PROD }}"
+            export NOTION_DB_ID_PLAYERS="${{ secrets.NOTION_DB_ID_PLAYERS_PROD }}"
+            export NOTION_DB_ID_SIGNUPS="${{ secrets.NOTION_DB_ID_SIGNUPS_PROD }}"
+            export NOTION_DB_ID_GAME_METADATA="${{ secrets.NOTION_DB_ID_GAME_METADATA_PROD }}"
+            export NOTION_DB_ID_BOT_STATE="${{ secrets.NOTION_DB_ID_BOT_STATE_PROD }}"
+            export TELEGRAM_BOT_TOKEN="${{ secrets.TELEGRAM_BOT_TOKEN_PROD }}"
+            export BOT_ADMINS="${{ secrets.BOT_ADMINS_PROD }}"
+            export TELEGRAM_ADMIN_ID="${{ secrets.TELEGRAM_ADMIN_ID_PROD }}"
+            export TELEGRAM_BOT_ADMIN="${{ secrets.TELEGRAM_BOT_ADMIN_PROD }}"
+            export TELEGRAM_ALLOWED_CHAT="${{ secrets.TELEGRAM_ALLOWED_CHAT_PROD }}"
             firebase deploy --only functions \
               --project "${{ secrets.FIREBASE_PROJECT_ID_PROD }}" \
               --token "${{ secrets.FIREBASE_DEPLOY_TOKEN }}"
           fi
+        env:
+          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+          OPENAI_ASSISTANT_ID: ${{ secrets.OPENAI_ASSISTANT_ID }}
+          NOTION_API_KEY: ${{ secrets.NOTION_API_KEY }}
