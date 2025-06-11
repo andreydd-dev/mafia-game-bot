@@ -38,7 +38,10 @@ jobs:
         working-directory: functions
 
       - name: Deploy to TEST
-        run: npm run deploy:test
+        run: |
+          npx firebase deploy --only functions \
+            --project "${{ secrets.FIREBASE_PROJECT_ID_TEST }}" \
+            --token "${{ secrets.FIREBASE_DEPLOY_TOKEN }}"
         working-directory: functions
 
   deploy-prod:
@@ -72,5 +75,8 @@ jobs:
         working-directory: functions
 
       - name: Deploy to PROD
-        run: npm run deploy
+        run: |
+          npx firebase deploy --only functions \
+            --project "${{ secrets.FIREBASE_PROJECT_ID_PROD }}" \
+            --token "${{ secrets.FIREBASE_DEPLOY_TOKEN }}"
         working-directory: functions
