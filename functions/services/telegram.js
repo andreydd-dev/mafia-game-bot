@@ -22,16 +22,11 @@ async function sendMessage(chatId, text) {
 
 async function handleTelegramWebhook(req, res) {
   try {
-    console.log("ENV TEST 3:", process.env.TELEGRAM_ALLOWED_CHAT_3);
     const admins = JSON.parse(process.env.TELEGRAM_BOT_ADMIN || "[]");
-    console.log("ENV-3", process.env);
     const message = req.body?.message;
     const callback = req.body?.callback_query;
     const allowedChats = JSON.parse(process.env.TELEGRAM_ALLOWED_CHAT || "[]");
     const chatId = message?.chat?.id || callback?.message?.chat?.id;
-    console.log("allowedChats-0", process.env.TELEGRAM_ALLOWED_CHAT);
-    console.log("allowedChats-3", process.env.TELEGRAM_ALLOWED_CHAT_3);
-
 
     console.log("allowedChats", allowedChats);
     console.log("message", chatId, message);
@@ -48,7 +43,7 @@ async function handleTelegramWebhook(req, res) {
 
     if (text === "/startbot" || text === "/stopbot") {
       if (!isAdmin) {
-        await sendMessage(chatId, "⛔ У вас немає прав для цієї команди.");
+        console.log( "⛔ У вас немає прав для цієї команди.");
         return res.status(200).send("Access denied");
       }
       const newStatus = text === "/startbot" ? "Active" : "Stopped";
@@ -63,7 +58,7 @@ async function handleTelegramWebhook(req, res) {
           ? "✅ Запис на ігри відкритий"
           : "⛔ Запис тимчасово призупинений");
       } else {
-        await sendMessage(chatId, "❌ Не знайдено сторінку з Bot State.");
+        await console.log("❌ Не знайдено сторінку з Bot State.");
       }
       return res.status(200).send("Bot state updated");
     }
@@ -97,7 +92,7 @@ async function handleTelegramWebhook(req, res) {
       });
 
       if (!keyboard.length) {
-        await sendMessage(chatId, "⛔ Немає доступних майбутніх ігор для редагування.");
+        await console.log( "⛔ Немає доступних майбутніх ігор для редагування.");
         return res.status(200).send("No dates available");
       }
 
@@ -160,13 +155,13 @@ async function handleTelegramWebhook(req, res) {
 
         return res.status(200).send("Time updated");
       } else {
-        await sendMessage(cbChatId, "⚠️ Не знайдено гру для цієї дати.");
+        await console.log("⚠️ Не знайдено гру для цієї дати.");
         return res.status(404).send("Not found");
       }
     }
 
     if (text?.startsWith("/deleteplayer")) {
-      await sendMessage(chatId, "Функція видалення гравця ще не реалізована.");
+      await console.log( "Функція видалення гравця ще не реалізована.");
       return res.status(200).send("OK");
     }
 
