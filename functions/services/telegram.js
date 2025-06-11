@@ -34,6 +34,7 @@ async function handleTelegramWebhook(req, res) {
       console.log(`⛔ Запит з chatId ${chatId} відхилено`);
       return res.status(200).send("Chat not allowed");
     }
+
     const username = message?.from?.username || callback?.from?.username;
     const text = message?.text?.trim();
     const isAdmin = admins.includes(username);
