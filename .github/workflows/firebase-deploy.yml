@@ -12,6 +12,7 @@ jobs:
     runs-on: ubuntu-latest
     env:
       TELEGRAM_ALLOWED_CHAT: ${{ secrets.TELEGRAM_ALLOWED_CHAT_TEST }}
+      TELEGRAM_ALLOWED_CHAT2: ${{ secrets.TELEGRAM_BOT_ADMIN_TEST }}
       TELEGRAM_BOT_ADMIN: ${{ secrets.TELEGRAM_BOT_ADMIN_TEST }}
       OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
       OPENAI_ASSISTANT_ID: ${{ secrets.OPENAI_ASSISTANT_ID }}
