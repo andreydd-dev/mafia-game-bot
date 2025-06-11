@@ -26,8 +26,9 @@ async function handleTelegramWebhook(req, res) {
 
     const message = req.body?.message;
     const callback = req.body?.callback_query;
-    const allowedChats = process.env.TELEGRAM_ALLOWED_CHAT;
+    const allowedChats = JSON.parse(process.env.TELEGRAM_ALLOWED_CHAT || "[]");
     const chatId = message?.chat?.id || callback?.message?.chat?.id;
+    console.log("allowedChats", allowedChats);
     console.log("message", chatId, message);
     if (!allowedChats.includes(chatId)) {
       console.log(`⛔ Запит з chatId ${chatId} відхилено`);
