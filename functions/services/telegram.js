@@ -29,6 +29,7 @@ async function handleTelegramWebhook(req, res) {
     const allowedChats = JSON.parse(process.env.TELEGRAM_ALLOWED_CHAT || "[]");
     const chatId = message?.chat?.id || callback?.message?.chat?.id;
     console.log("allowedChats-0", process.env.TELEGRAM_ALLOWED_CHAT);
+    console.log("allowedChats-3", process.env.TELEGRAM_ALLOWED_CHAT_3);
 
     console.log("allowedChats", allowedChats);
     console.log("message", chatId, message);
