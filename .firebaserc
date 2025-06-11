@@ -1,0 +1,9 @@
+{
+  "projects": {
+    "default": "mafia-shedule-bot",
+    "test": "mafia-schedule-bot-test",
+    "main": "mafia-shedule-bot"
+  },
+  "targets": {},
+  "etags": {}
+}
