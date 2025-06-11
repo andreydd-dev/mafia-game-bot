@@ -1,0 +1,50 @@
+name: Firebase Deploy (dev/master)
+
+on:
+  push:
+    branches:
+      - dev
+      - master
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: 📦 Checkout code
+        uses: actions/checkout@v3
+
+      - name: 🟢 Set up Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: '22'
+
+      - name: 🔧 Install Firebase CLI
+        run: npm install -g firebase-tools
+
+      - name: 📁 Install dependencies
+        run: |
+          cd functions
+          npm ci
+
+      - name: 🔐 Decode Firebase service account
+        run: |
+          cd functions
+          if [[ "${{ github.ref }}" == "refs/heads/dev" ]]; then
+            echo "${{ secrets.FIREBASE_SERVICE_ACCOUNT_TEST }}" | base64 --decode > serviceAccount.json
+          else
+            echo "${{ secrets.FIREBASE_SERVICE_ACCOUNT_PROD }}" | base64 --decode > serviceAccount.json
+          fi
+
+      - name: 🚀 Deploy to Firebase
+        run: |
+          cd functions
+          if [[ "${{ github.ref }}" == "refs/heads/dev" ]]; then
+            firebase deploy --only functions \
+              --project "${{ secrets.FIREBASE_PROJECT_ID_TEST }}" \
+              --token "${{ secrets.FIREBASE_DEPLOY_TOKEN }}"
+          else
+            firebase deploy --only functions \
+              --project "${{ secrets.FIREBASE_PROJECT_ID_PROD }}" \
+              --token "${{ secrets.FIREBASE_DEPLOY_TOKEN }}"
+          fi
