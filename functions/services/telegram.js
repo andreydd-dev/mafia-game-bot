@@ -22,6 +22,7 @@ async function sendMessage(chatId, text) {
 
 async function handleTelegramWebhook(req, res) {
   try {
+    console.log("ENV TEST 3:", process.env.TELEGRAM_ALLOWED_CHAT_3);
     const admins = JSON.parse(process.env.TELEGRAM_BOT_ADMIN || "[]");
     console.log("ENV-3", process.env);
     const message = req.body?.message;
@@ -30,6 +31,7 @@ async function handleTelegramWebhook(req, res) {
     const chatId = message?.chat?.id || callback?.message?.chat?.id;
     console.log("allowedChats-0", process.env.TELEGRAM_ALLOWED_CHAT);
     console.log("allowedChats-3", process.env.TELEGRAM_ALLOWED_CHAT_3);
+
 
     console.log("allowedChats", allowedChats);
     console.log("message", chatId, message);
