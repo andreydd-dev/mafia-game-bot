@@ -1,4 +1,4 @@
-name: Firebase Deploy (dev/master)
+name: Deploy to Firebase
 
 on:
   push:
@@ -7,54 +7,70 @@ on:
       - master
 
 jobs:
-  deploy:
+  deploy-test:
+    if: github.ref == 'refs/heads/dev'
     runs-on: ubuntu-latest
-
+    env:
+      TELEGRAM_ALLOWED_CHAT: ${{ secrets.TELEGRAM_ALLOWED_CHAT_TEST }}
+      TELEGRAM_BOT_ADMIN: ${{ secrets.TELEGRAM_BOT_ADMIN_TEST }}
+      OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+      OPENAI_ASSISTANT_ID: ${{ secrets.OPENAI_ASSISTANT_ID }}
+      NOTION_API_KEY: ${{ secrets.NOTION_API_KEY }}
+      NOTION_DB_ID: ${{ secrets.NOTION_DB_ID_TEST }}
+      NOTION_DB_ID_PLAYERS: ${{ secrets.NOTION_DB_ID_PLAYERS_TEST }}
+      NOTION_DB_ID_SIGNUPS: ${{ secrets.NOTION_DB_ID_SIGNUPS_TEST }}
+      NOTION_DB_ID_GAME_METADATA: ${{ secrets.NOTION_DB_ID_GAME_METADATA_TEST }}
+      NOTION_DB_ID_BOT_STATE: ${{ secrets.NOTION_DB_ID_BOT_STATE_TEST }}
+      TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN_TEST }}
+      TELEGRAM_ADMIN_ID: ${{ secrets.TELEGRAM_ADMIN_ID }}
+      TELEGRAM_BOT_ADMIN_ID: ${{ secrets.TELEGRAM_BOT_ADMIN_ID }}
     steps:
-      - name: 📦 Checkout code
+      - name: Checkout code
         uses: actions/checkout@v3
 
-      - name: 🟢 Set up Node.js
+      - name: Set up Node.js
         uses: actions/setup-node@v3
         with:
-          node-version: '22'
+          node-version: 22
 
-      - name: 🔧 Install Firebase CLI
-        run: npm install -g firebase-tools
+      - name: Install dependencies
+        run: npm install
+        working-directory: functions
 
-      - name: 📁 Install dependencies
-        run: |
-          cd functions
-          npm ci
+      - name: Deploy to TEST
+        run: npm run deploy:test
+        working-directory: functions
 
-      - name: 🔐 Decode Firebase service account
-        run: |
-          cd functions
-          if [[ "${{ github.ref }}" == "refs/heads/dev" ]]; then
-            echo "${{ secrets.FIREBASE_SERVICE_ACCOUNT_TEST }}" | base64 --decode > serviceAccount.json
-          else
-            echo "${{ secrets.FIREBASE_SERVICE_ACCOUNT_PROD }}" | base64 --decode > serviceAccount.json
-          fi
+  deploy-prod:
+    if: github.ref == 'refs/heads/master'
+    runs-on: ubuntu-latest
+    env:
+      TELEGRAM_ALLOWED_CHAT: ${{ secrets.TELEGRAM_ALLOWED_CHAT_PROD }}
+      TELEGRAM_BOT_ADMIN: ${{ secrets.TELEGRAM_BOT_ADMIN_PROD }}
+      OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+      OPENAI_ASSISTANT_ID: ${{ secrets.OPENAI_ASSISTANT_ID }}
+      NOTION_API_KEY: ${{ secrets.NOTION_API_KEY }}
+      NOTION_DB_ID: ${{ secrets.NOTION_DB_ID_PROD }}
+      NOTION_DB_ID_PLAYERS: ${{ secrets.NOTION_DB_ID_PLAYERS_PROD }}
+      NOTION_DB_ID_SIGNUPS: ${{ secrets.NOTION_DB_ID_SIGNUPS_PROD }}
+      NOTION_DB_ID_GAME_METADATA: ${{ secrets.NOTION_DB_ID_GAME_METADATA_PROD }}
+      NOTION_DB_ID_BOT_STATE: ${{ secrets.NOTION_DB_ID_BOT_STATE_PROD }}
+      TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN_PROD }}
+      TELEGRAM_ADMIN_ID: ${{ secrets.TELEGRAM_ADMIN_ID }}
+      TELEGRAM_BOT_ADMIN_ID: ${{ secrets.TELEGRAM_BOT_ADMIN_ID }}
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
 
-      - name: 🚀 Deploy to Firebase
-        env:
-          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
-          OPENAI_ASSISTANT_ID: ${{ secrets.OPENAI_ASSISTANT_ID }}
-          NOTION_API_KEY: ${{ secrets.NOTION_API_KEY }}
-          FIREBASE_DEPLOY_TOKEN: ${{ secrets.FIREBASE_DEPLOY_TOKEN }}
+      - name: Set up Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: 22
 
-          NOTION_DB_ID: ${{ github.ref == 'refs/heads/dev' && secrets.NOTION_DB_ID_TEST || secrets.NOTION_DB_ID_PROD }}
-          NOTION_DB_ID_PLAYERS: ${{ github.ref == 'refs/heads/dev' && secrets.NOTION_DB_ID_PLAYERS_TEST || secrets.NOTION_DB_ID_PLAYERS_PROD }}
-          NOTION_DB_ID_SIGNUPS: ${{ github.ref == 'refs/heads/dev' && secrets.NOTION_DB_ID_SIGNUPS_TEST || secrets.NOTION_DB_ID_SIGNUPS_PROD }}
-          NOTION_DB_ID_GAME_METADATA: ${{ github.ref == 'refs/heads/dev' && secrets.NOTION_DB_ID_GAME_METADATA_TEST || secrets.NOTION_DB_ID_GAME_METADATA_PROD }}
-          NOTION_DB_ID_BOT_STATE: ${{ github.ref == 'refs/heads/dev' && secrets.NOTION_DB_ID_BOT_STATE_TEST || secrets.NOTION_DB_ID_BOT_STATE_PROD }}
-          TELEGRAM_BOT_TOKEN: ${{ github.ref == 'refs/heads/dev' && secrets.TELEGRAM_BOT_TOKEN_TEST || secrets.TELEGRAM_BOT_TOKEN_PROD }}
-          BOT_ADMINS: ${{ github.ref == 'refs/heads/dev' && secrets.BOT_ADMINS_TEST || secrets.BOT_ADMINS_PROD }}
-          TELEGRAM_ADMIN_ID: ${{ github.ref == 'refs/heads/dev' && secrets.TELEGRAM_ADMIN_ID_TEST || secrets.TELEGRAM_ADMIN_ID_PROD }}
-          TELEGRAM_BOT_ADMIN: ${{ github.ref == 'refs/heads/dev' && secrets.TELEGRAM_BOT_ADMIN_TEST || secrets.TELEGRAM_BOT_ADMIN_PROD }}
-          TELEGRAM_ALLOWED_CHAT: ${{ github.ref == 'refs/heads/dev' && secrets.TELEGRAM_ALLOWED_CHAT_TEST || secrets.TELEGRAM_ALLOWED_CHAT_PROD }}
-        run: |
-          cd functions
-          firebase deploy --only functions \
-            --project "${{ github.ref == 'refs/heads/dev' && secrets.FIREBASE_PROJECT_ID_TEST || secrets.FIREBASE_PROJECT_ID_PROD }}" \
-            --token "${{ secrets.FIREBASE_DEPLOY_TOKEN }}"
+      - name: Install dependencies
+        run: npm install
+        working-directory: functions
+
+      - name: Deploy to PROD
+        run: npm run deploy
+        working-directory: functions
