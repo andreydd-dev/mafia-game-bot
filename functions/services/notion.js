@@ -117,7 +117,7 @@ async function buildSignupsSummaryAndSyncToTelegram(notion, chatId, resend = fal
     const t2 = b.properties["Timestamp"]?.number || 0;
     return t1 - t2;
   });
-
+  console.log("sortedPages",sortedPages);
   for (const page of sortedPages) {
     const props = page.properties;
     const dateStr = props["Game date"]?.rich_text?.[0]?.text?.content;
@@ -129,6 +129,7 @@ async function buildSignupsSummaryAndSyncToTelegram(notion, chatId, resend = fal
     if (!dateStr) continue;
 
     const date = new Date(dateStr);
+    console.log("date",date);
     if (isNaN(date.getTime()) || date <= today) continue;
 
     if (!groupedByDate[dateStr]) groupedByDate[dateStr] = [];
