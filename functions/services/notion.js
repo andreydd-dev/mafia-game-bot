@@ -129,7 +129,7 @@ async function buildSignupsSummaryAndSyncToTelegram(notion, chatId, resend = fal
     if (!dateStr) continue;
 
     const date = new Date(dateStr);
-    if (isNaN(date.getTime()) || date < today) continue;
+    if (isNaN(date.getTime()) || date <= today) continue;
 
     if (!groupedByDate[dateStr]) groupedByDate[dateStr] = [];
     groupedByDate[dateStr].push(time !== "18:00" ? `${nickname} (${time})` : nickname);
