@@ -131,13 +131,14 @@ async function buildSignupsSummaryAndSyncToTelegram(notion, chatId, resend = fal
     if (!dateStr) continue;
 
     const date = new Date(dateStr);
+    console.log("dateStr",dateStr);
     console.log("date",date, today);
     if (isNaN(date.getTime()) || date <= today) continue;
     console.log("after-date",date, today);
     if (!groupedByDate[dateStr]) groupedByDate[dateStr] = [];
     groupedByDate[dateStr].push(time !== "18:00" ? `${nickname} (${time})` : nickname);
   }
-
+  console.log("groupedByDate", groupedByDate);
   for (const dateKey of Object.keys(groupedByDate).sort()) {
     const players = groupedByDate[dateKey];
     let gameTime = "18:00";
