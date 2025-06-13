@@ -111,6 +111,8 @@ async function buildSignupsSummaryAndSyncToTelegram(notion, chatId, resend = fal
   });
 
   const today = new Date();
+  today.setHours(18, 0, 0, 0);
+
   const groupedByDate = {};
   const sortedPages = pages.results.sort((a, b) => {
     const t1 = a.properties["Timestamp"]?.number || 0;
