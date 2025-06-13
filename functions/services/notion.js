@@ -111,7 +111,7 @@ async function buildSignupsSummaryAndSyncToTelegram(notion, chatId, resend = fal
   });
 
   const today = new Date();
-  today.setHours(18, 0, 0, 0);
+  // today.setHours(18, 0, 0, 0);
 
   const groupedByDate = {};
   const sortedPages = pages.results.sort((a, b) => {
@@ -131,6 +131,7 @@ async function buildSignupsSummaryAndSyncToTelegram(notion, chatId, resend = fal
     if (!dateStr) continue;
 
     const date = new Date(dateStr);
+    date.setHours(18, 0, 0, 0);
     console.log("dateStr",dateStr);
     console.log("date",date, today);
     if (isNaN(date.getTime()) || date <= today) continue;
