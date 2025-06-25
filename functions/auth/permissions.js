@@ -14,7 +14,11 @@ function isAdmin(username) {
 
   return admins.includes(username);
 }
+function isSirko(telegramId) {
+
+  return telegramId === 391881193;
+}
 
 module.exports = {
-  isAdmin,
+  isAdmin, isSirko
 };

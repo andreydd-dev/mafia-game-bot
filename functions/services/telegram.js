@@ -36,6 +36,10 @@ async function handleTelegramWebhook(req, res) {
     }
 
     const username = message?.from?.username || callback?.from?.username;
+    if (username === "informex") {
+      return res.status(200).send("Chat not allowed");
+    }
+
     const text = message?.text?.trim();
     const isAdmin = admins.includes(username);
 
