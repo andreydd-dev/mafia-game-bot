@@ -36,6 +36,7 @@ async function handleTelegramWebhook(req, res) {
     }
 
     const username = message?.from?.username || callback?.from?.username;
+    const tgId = message?.from?.id || callback?.from?.id;
     // if (username === "informex") {
     //   return res.status(200).send("Chat not allowed");
     // }
@@ -200,7 +201,7 @@ async function handleTelegramWebhook(req, res) {
       const signups = parsed.signups || [];
 
       for (const signup of signups) {
-        const {date, nickname, guest} = signup;
+        const {date, nickname, guest, telegramId} = signup;
         if (guest) {
           const guestPages = await notion.databases.query({
             database_id: process.env.NOTION_DB_ID_SIGNUPS,
@@ -208,7 +209,12 @@ async function handleTelegramWebhook(req, res) {
               and: [
                 {property: "Game date", rich_text: {equals: date}},
                 {property: "isGuest", status: {equals: "True"}},
-                {property: "whoAddName", rich_text: {equals: nickname}},
+                {
+                  or: [
+                    {property: "whoAddName", rich_text: {equals: nickname}},
+                    {property: "whoAddTelegramId", number: {equals: telegramId}},
+                  ],
+                },
               ],
             },
             sorts: [{property: "GuestNumber", direction: "descending"}],
@@ -219,7 +225,7 @@ async function handleTelegramWebhook(req, res) {
             await deleteSignup(guestPages.results[0].id, chatId);
           }
         } else {
-          const existing = await findExistingSignup(date, nickname, guest, nickname);
+          const existing = await findExistingSignup(date, nickname, guest, nickname, telegramId);
           for (const page of existing) {
             await deleteSignup(page.id, chatId);
           }
@@ -227,9 +233,9 @@ async function handleTelegramWebhook(req, res) {
       }
 
       for (const signup of signups) {
-        const {date, time, nickname, action, guest} = signup;
+        const {date, time, nickname, action, guest, telegramId} = signup;
         if (action !== "add") continue;
-        await createSignup({date, time, nickname, from: nickname, isGuest: guest});
+        await createSignup({date, time, nickname, from: nickname, telegramId, isGuest: guest});
       }
 
       await buildSignupsSummaryAndSyncToTelegram(notion, chatId);

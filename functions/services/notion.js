@@ -15,19 +15,30 @@ async function findPlayerByUsername(username) {
   return response.results[0];
 }
 
-async function findExistingSignup(date, nickname, guest, from, guestNumber = null) {
+async function findPlayerByTelegramId(telegramId) {
+  const response = await notion.databases.query({
+    database_id: process.env.NOTION_DB_ID_PLAYERS,
+    filter: {
+      property: "TelegramID",
+      number: {equals: telegramId},
+    },
+  });
+  return response.results[0];
+}
+
+async function findExistingSignup(date, nickname, guest, from, telegramId, guestNumber = null) {
   const filters = [
     {property: "Game date", rich_text: {equals: date}},
     {property: "isGuest", status: {equals: guest ? "True" : "False"}},
   ];
 
   if (guest) {
-    filters.push({property: "whoAddName", rich_text: {equals: from}});
+    filters.push({property: "whoAddTelegramId", number: {equals: telegramId}});
     if (guestNumber !== null) {
       filters.push({property: "GuestNumber", number: {equals: guestNumber}});
     }
   } else {
-    filters.push({property: "Name", title: {equals: nickname}});
+    filters.push({property: "whoAddTelegramId", number: {equals: telegramId}});
   }
 
   const response = await notion.databases.query({
@@ -47,14 +58,22 @@ async function deleteSignup(pageId, chatId) {
   await buildSignupsSummaryAndSyncToTelegram(notion, chatId);
 }
 
-async function createSignup({date, time, nickname, from, isGuest = false}) {
+async function createSignup({date, time, nickname, from, telegramId, isGuest = false}) {
   let displayName = from;
   let guestNumber = null;
 
   const player = await findPlayerByUsername(from);
+  const playerById = await findPlayerByTelegramId(telegramId);
   if (player) {
     const nameProp = player.properties?.["Game Nickname"]?.rich_text?.[0]?.text?.content;
     if (nameProp) displayName = nameProp;
+  } else if (playerById) {
+    const nameProp = playerById.properties?.["Game Nickname"]?.rich_text?.[0]?.text?.content;
+    if (nameProp) {
+      displayName = nameProp;
+    } else {
+      displayName = telegramId;
+    }
   }
 
   let finalNickname = displayName;
@@ -80,7 +99,12 @@ async function createSignup({date, time, nickname, from, isGuest = false}) {
         and: [
           {property: "Game date", rich_text: {equals: date}},
           {property: "isGuest", status: {equals: "True"}},
-          {property: "whoAddName", rich_text: {equals: from}},
+          {
+            or: [
+              {property: "whoAddName", rich_text: {equals: nickname}},
+              {property: "whoAddTelegramId", number: {equals: telegramId}},
+            ],
+          },
         ],
       },
     });
@@ -96,6 +120,7 @@ async function createSignup({date, time, nickname, from, isGuest = false}) {
       "Game date": {rich_text: [{text: {content: date}}]},
       "Game time": {rich_text: [{text: {content: time}}]},
       "whoAddName": {rich_text: [{text: {content: from}}]},
+      "whoAddTelegramId": {number: telegramId},
       "isGuest": {status: {name: isGuest ? "True" : "False"}},
       "GuestNumber": guestNumber !== null ? {number: guestNumber} : undefined,
       "mID": messageId ? {number: messageId} : undefined,
@@ -132,14 +157,14 @@ async function buildSignupsSummaryAndSyncToTelegram(notion, chatId, resend = fal
 
     const date = new Date(dateStr);
     date.setHours(18, 0, 0, 0);
-    console.log("dateStr",dateStr);
-    console.log("date",date, today);
+    // console.log("dateStr",dateStr);
+    // console.log("date",date, today);
     if (isNaN(date.getTime()) || date <= today) continue;
-    console.log("after-date",date, today);
+    // console.log("after-date",date, today);
     if (!groupedByDate[dateStr]) groupedByDate[dateStr] = [];
     groupedByDate[dateStr].push(time !== "18:00" ? `${nickname} (${time})` : nickname);
   }
-  console.log("groupedByDate", groupedByDate);
+  // console.log("groupedByDate", groupedByDate);
   for (const dateKey of Object.keys(groupedByDate).sort()) {
     const players = groupedByDate[dateKey];
     let gameTime = "18:00";
@@ -178,7 +203,7 @@ async function buildSignupsSummaryAndSyncToTelegram(notion, chatId, resend = fal
     });
 
     let messageText = `Мафія\n\n${capitalizeFirstLetter(formattedDate)} о ${gameTime}\n`;
-    players.slice(0, 10).forEach((name, i) => {
+    players.slice(0, 15).forEach((name, i) => {
       messageText += `${i + 1}. ${name}\n`;
     });
 
@@ -234,6 +259,7 @@ async function isBotActive() {
 module.exports = {
   notion,
   findPlayerByUsername,
+  findPlayerByTelegramId,
   findExistingSignup,
   deleteSignup,
   createSignup,
