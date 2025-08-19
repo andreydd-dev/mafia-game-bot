@@ -212,7 +212,7 @@ async function handleTelegramWebhook(req, res) {
                 {
                   or: [
                     {property: "whoAddName", rich_text: {equals: nickname}},
-                    {property: "whoAddTelegramId", number: {equals: telegramId}},
+                    {property: "whoAddTelegramId", number: {equals: Number(telegramId)}},
                   ],
                 },
               ],

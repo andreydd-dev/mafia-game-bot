@@ -33,12 +33,12 @@ async function findExistingSignup(date, nickname, guest, from, telegramId, guest
   ];
 
   if (guest) {
-    filters.push({property: "whoAddTelegramId", number: {equals: telegramId}});
+    filters.push({property: "whoAddTelegramId", number: {equals: Number(telegramId)}});
     if (guestNumber !== null) {
       filters.push({property: "GuestNumber", number: {equals: guestNumber}});
     }
   } else {
-    filters.push({property: "whoAddTelegramId", number: {equals: telegramId}});
+    filters.push({property: "whoAddTelegramId", number: {equals: Number(telegramId)}});
   }
 
   const response = await notion.databases.query({
@@ -102,7 +102,7 @@ async function createSignup({date, time, nickname, from, telegramId, isGuest = f
           {
             or: [
               {property: "whoAddName", rich_text: {equals: nickname}},
-              {property: "whoAddTelegramId", number: {equals: telegramId}},
+              {property: "whoAddTelegramId", number: {equals: Number(telegramId)}},
             ],
           },
         ],
@@ -120,7 +120,7 @@ async function createSignup({date, time, nickname, from, telegramId, isGuest = f
       "Game date": {rich_text: [{text: {content: date}}]},
       "Game time": {rich_text: [{text: {content: time}}]},
       "whoAddName": {rich_text: [{text: {content: from}}]},
-      "whoAddTelegramId": {number: telegramId},
+      "whoAddTelegramId": {number: Number(telegramId)},
       "isGuest": {status: {name: isGuest ? "True" : "False"}},
       "GuestNumber": guestNumber !== null ? {number: guestNumber} : undefined,
       "mID": messageId ? {number: messageId} : undefined,
