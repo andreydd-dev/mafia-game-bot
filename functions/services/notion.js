@@ -20,7 +20,7 @@ async function findPlayerByTelegramId(telegramId) {
     database_id: process.env.NOTION_DB_ID_PLAYERS,
     filter: {
       property: "TelegramID",
-      number: {equals: telegramId},
+      number: {equals: Number(telegramId)},
     },
   });
   return response.results[0];
