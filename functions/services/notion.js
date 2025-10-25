@@ -134,6 +134,7 @@ async function buildSignupsSummaryAndSyncToTelegram(notion, chatId, resend = fal
     database_id: process.env.NOTION_DB_ID_SIGNUPS,
     filter: {property: "Game date", rich_text: {is_not_empty: true}},
   });
+  console.log("pages-count", pages.results.length);
 
   const today = new Date();
   // today.setHours(18, 0, 0, 0);
@@ -177,6 +178,7 @@ async function buildSignupsSummaryAndSyncToTelegram(notion, chatId, resend = fal
         filter: {property: "Date", rich_text: {equals: dateKey}},
       });
       metadataPage = meta.results[0];
+      console.log("metadataPage-current",metadataPage);
 
       if (!metadataPage) {
         const newPage = await notion.pages.create({
@@ -206,7 +208,7 @@ async function buildSignupsSummaryAndSyncToTelegram(notion, chatId, resend = fal
     players.slice(0, 15).forEach((name, i) => {
       messageText += `${i + 1}. ${name}\n`;
     });
-
+    console.log("messageText", messageText);
     try {
       if (resend && messageId) {
         try {
@@ -221,7 +223,7 @@ async function buildSignupsSummaryAndSyncToTelegram(notion, chatId, resend = fal
         }
       }
 
-
+      console.log("messageId", messageId);
       if (messageId) {
         await axios.post(`https://api.telegram.org/bot${process.env.TELEGRAM_BOT_TOKEN}/editMessageText`, {
           chat_id: chatId,
@@ -233,6 +235,7 @@ async function buildSignupsSummaryAndSyncToTelegram(notion, chatId, resend = fal
           chat_id: chatId,
           text: messageText.trim(),
         });
+        console.log("TG-response", response);
         const newMessageId = response.data?.result?.message_id;
         if (newMessageId && metadataPage?.id) {
           await notion.pages.update({
