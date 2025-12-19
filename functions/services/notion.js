@@ -133,6 +133,9 @@ async function buildSignupsSummaryAndSyncToTelegram(notion, chatId, resend = fal
   const pages = await notion.databases.query({
     database_id: process.env.NOTION_DB_ID_SIGNUPS,
     filter: {property: "Game date", rich_text: {is_not_empty: true}},
+    sorts: [
+      { property: "Game date", direction: "descending" }
+    ],
   });
   console.log("pages-count", pages.results.length);
 
