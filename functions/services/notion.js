@@ -208,7 +208,7 @@ async function buildSignupsSummaryAndSyncToTelegram(notion, chatId, resend = fal
     });
 
     let messageText = `Мафія\n\n${capitalizeFirstLetter(formattedDate)} о ${gameTime}\n`;
-    players.slice(0, 15).forEach((name, i) => {
+    players.slice(0, 20).forEach((name, i) => {
       messageText += `${i + 1}. ${name}\n`;
     });
     console.log("messageText", messageText);
