@@ -238,7 +238,7 @@ async function buildSignupsSummaryAndSyncToTelegram(notion, chatId, resend = fal
       return aMinutes - bMinutes;
     });
 
-    const visiblePlayers = [...mainPlayers, ...delayedPlayers].slice(0, 20);
+    const visiblePlayers = [...mainPlayers, ...delayedPlayers];
 
     let messageText = `Мафія\n\n${capitalizeFirstLetter(formattedDate)} о ${gameTime}\n`;
     visiblePlayers.forEach((player, i) => {
