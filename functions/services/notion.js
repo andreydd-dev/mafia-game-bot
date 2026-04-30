@@ -4,6 +4,15 @@ const {capitalizeFirstLetter} = require("../utils/helpers");
 
 const notion = new Client({auth: process.env.NOTION_API_KEY});
 
+function parseMinutesFromTime(time) {
+  if (!time || typeof time !== "string") return null;
+  const [hoursRaw, minutesRaw] = time.split(":");
+  const hours = Number(hoursRaw);
+  const minutes = Number(minutesRaw);
+  if (Number.isNaN(hours) || Number.isNaN(minutes)) return null;
+  return hours * 60 + minutes;
+}
+
 async function findPlayerByUsername(username) {
   const response = await notion.databases.query({
     database_id: process.env.NOTION_DB_ID_PLAYERS,
@@ -166,7 +175,7 @@ async function buildSignupsSummaryAndSyncToTelegram(notion, chatId, resend = fal
     if (isNaN(date.getTime()) || date <= today) continue;
     // console.log("after-date",date, today);
     if (!groupedByDate[dateStr]) groupedByDate[dateStr] = [];
-    groupedByDate[dateStr].push(time !== "18:00" ? `${nickname} (${time})` : nickname);
+    groupedByDate[dateStr].push({nickname, time});
   }
   // console.log("groupedByDate", groupedByDate);
   for (const dateKey of Object.keys(groupedByDate).sort()) {
@@ -207,9 +216,36 @@ async function buildSignupsSummaryAndSyncToTelegram(notion, chatId, resend = fal
       weekday: "long", day: "2-digit", month: "2-digit",
     });
 
+    const baseTimeMinutes = parseMinutesFromTime("18:00");
+    const playersWithIndex = players.map((player, index) => ({...player, index}));
+    const mainPlayers = [];
+    const delayedPlayers = [];
+
+    for (const player of playersWithIndex) {
+      const playerMinutes = parseMinutesFromTime(player.time || "18:00");
+      const isDelayed = playerMinutes !== null && baseTimeMinutes !== null && playerMinutes > baseTimeMinutes;
+      if (isDelayed) {
+        delayedPlayers.push(player);
+      } else {
+        mainPlayers.push(player);
+      }
+    }
+
+    delayedPlayers.sort((a, b) => {
+      const aMinutes = parseMinutesFromTime(a.time || "18:00") || 0;
+      const bMinutes = parseMinutesFromTime(b.time || "18:00") || 0;
+      if (aMinutes === bMinutes) return a.index - b.index;
+      return aMinutes - bMinutes;
+    });
+
+    const visiblePlayers = [...mainPlayers, ...delayedPlayers].slice(0, 20);
+
     let messageText = `Мафія\n\n${capitalizeFirstLetter(formattedDate)} о ${gameTime}\n`;
-    players.slice(0, 20).forEach((name, i) => {
-      messageText += `${i + 1}. ${name}\n`;
+    visiblePlayers.forEach((player, i) => {
+      const inDelayedPart = i >= mainPlayers.length && delayedPlayers.length > 0;
+      const timeSuffix = player.time && player.time !== "18:00" ? ` (${player.time})` : "";
+      const prefix = inDelayedPart ? "--> " : "";
+      messageText += `${prefix}${i + 1}. ${player.nickname}${timeSuffix}\n`;
     });
     console.log("messageText", messageText);
     try {
