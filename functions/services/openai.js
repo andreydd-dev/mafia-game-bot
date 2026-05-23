@@ -1,6 +1,5 @@
 // services/openai.js
 const {OpenAI} = require("openai");
-const {getCurrentDateUtc} = require("../utils/date");
 
 function getOpenAIClient() {
   return new OpenAI({apiKey: process.env.OPENAI_API_KEY});
@@ -21,7 +20,7 @@ async function runAssistant(messageFull) {
       type: "text",
       text: JSON.stringify({
         ...messageFull,
-        current_date: getCurrentDateUtc(),
+        current_date: new Date().toISOString().split("T")[0],
       }),
     }],
   });

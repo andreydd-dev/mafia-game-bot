@@ -8,7 +8,6 @@ const {
   buildSignupsSummaryAndSyncToTelegram,
   isBotActive,
 } = require("./notion");
-const {getCurrentDateUtc, formatGameDateUkUa} = require("../utils/date");
 
 function getOpenAIClient() {
   return new OpenAI({apiKey: process.env.OPENAI_API_KEY});
@@ -76,7 +75,7 @@ async function handleTelegramWebhook(req, res) {
     }
 
     if (text === "/settime") {
-      const todayISO = getCurrentDateUtc();
+      const todayISO = new Date().toISOString().split("T")[0];
       const meta = await notion.databases.query({
         database_id: process.env.NOTION_DB_ID_GAME_METADATA,
         filter: {
@@ -92,7 +91,9 @@ async function handleTelegramWebhook(req, res) {
         .filter(Boolean).filter(d => d >= todayISO).sort();
 
       const keyboard = dates.map(date => {
-        const label = formatGameDateUkUa(date);
+        const label = new Date(date).toLocaleDateString("uk-UA", {
+          weekday: "long", day: "2-digit", month: "2-digit",
+        });
         return [{text: label, callback_data: `settime_date_${date}`}];
       });
 
@@ -177,7 +178,7 @@ async function handleTelegramWebhook(req, res) {
         role: "user",
         content: [{
           type: "text",
-          text: JSON.stringify({...message, current_date: getCurrentDateUtc()})
+          text: JSON.stringify({...message, current_date: new Date().toISOString().split("T")[0]})
         }],
       });
 

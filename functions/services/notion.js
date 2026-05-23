@@ -1,12 +1,6 @@
 const {Client} = require("@notionhq/client");
 const axios = require("axios");
 const {capitalizeFirstLetter} = require("../utils/helpers");
-const {
-  getCurrentDateUtc,
-  getGameDateFromProperties,
-  isTodayOrFutureGameDate,
-  formatGameDateUkUa,
-} = require("../utils/date");
 
 const notion = new Client({auth: process.env.NOTION_API_KEY});
 
@@ -17,47 +11,6 @@ function parseMinutesFromTime(time) {
   const minutes = Number(minutesRaw);
   if (Number.isNaN(hours) || Number.isNaN(minutes)) return null;
   return hours * 60 + minutes;
-}
-
-function getSignupSortTime(page) {
-  return page.properties["Timestamp"]?.number
-    || (page.created_time ? new Date(page.created_time).getTime() : 0);
-}
-
-async function fetchTodayAndFutureSignups(todayUtc) {
-  const baseQuery = {
-    database_id: process.env.NOTION_DB_ID_SIGNUPS,
-    sorts: [{property: "Game date", direction: "ascending"}],
-  };
-  const resultsById = new Map();
-  const queries = [
-    {
-      ...baseQuery,
-      filter: {
-        and: [
-          {property: "Game date", rich_text: {is_not_empty: true}},
-          {property: "Game date", rich_text: {greater_than_or_equal_to: todayUtc}},
-        ],
-      },
-    },
-    {
-      ...baseQuery,
-      filter: {property: "Game date", date: {on_or_after: todayUtc}},
-    },
-  ];
-
-  for (const query of queries) {
-    try {
-      const response = await notion.databases.query(query);
-      for (const page of response.results) {
-        resultsById.set(page.id, page);
-      }
-    } catch (err) {
-      console.warn("Signups query skipped:", err.message);
-    }
-  }
-
-  return Array.from(resultsById.values());
 }
 
 async function findPlayerByUsername(username) {
@@ -107,7 +60,7 @@ async function findExistingSignup(date, nickname, guest, from, telegramId, guest
 
 async function deleteSignup(pageId, chatId) {
   const page = await notion.pages.retrieve({page_id: pageId});
-  const date = getGameDateFromProperties(page.properties);
+  const date = page.properties["Game date"]?.rich_text?.[0]?.text?.content;
   if (!date) return;
 
   await notion.pages.update({page_id: pageId, archived: true});
@@ -186,30 +139,41 @@ async function createSignup({date, time, nickname, from, telegramId, isGuest = f
 }
 
 async function buildSignupsSummaryAndSyncToTelegram(notion, chatId, resend = false) {
-  const todayUtc = getCurrentDateUtc();
-  const signupPages = await fetchTodayAndFutureSignups(todayUtc);
-  console.log("pages-count", signupPages.length, "todayUtc", todayUtc);
+  const pages = await notion.databases.query({
+    database_id: process.env.NOTION_DB_ID_SIGNUPS,
+    filter: {property: "Game date", rich_text: {is_not_empty: true}},
+    sorts: [
+      {property: "Game date", direction: "descending"}
+    ],
+  });
+  console.log("pages-count", pages.results.length);
+
+  const today = new Date();
+  // today.setHours(18, 0, 0, 0);
 
   const groupedByDate = {};
-  const sortedPages = signupPages.sort((a, b) => getSignupSortTime(a) - getSignupSortTime(b));
+  const sortedPages = pages.results.sort((a, b) => {
+    const t1 = a.properties["Timestamp"]?.number || 0;
+    const t2 = b.properties["Timestamp"]?.number || 0;
+    return t1 - t2;
+  });
   console.log("sortedPages",sortedPages);
   for (const page of sortedPages) {
     const props = page.properties;
-    const dateStr = getGameDateFromProperties(props);
+    const dateStr = props["Game date"]?.rich_text?.[0]?.text?.content;
     const time = props["Game time"]?.rich_text?.[0]?.text?.content || "18:00";
     const nickname =
       props["Game Nickname"]?.rich_text?.[0]?.text?.content ||
       props["Nickname"]?.rich_text?.[0]?.text?.content || "Гість";
 
-    if (!dateStr) {
-      console.warn("Пропущено запис без Game date:", page.id);
-      continue;
-    }
-    if (!isTodayOrFutureGameDate(dateStr)) {
-      console.warn("Пропущено минулу дату:", dateStr, page.id);
-      continue;
-    }
+    if (!dateStr) continue;
 
+    const date = new Date(dateStr);
+    date.setHours(18, 0, 0, 0);
+    // console.log("dateStr",dateStr);
+    // console.log("date",date, today);
+    if (isNaN(date.getTime()) || date <= today) continue;
+    // console.log("after-date",date, today);
     if (!groupedByDate[dateStr]) groupedByDate[dateStr] = [];
     groupedByDate[dateStr].push({nickname, time});
   }
@@ -248,7 +212,9 @@ async function buildSignupsSummaryAndSyncToTelegram(notion, chatId, resend = fal
       console.warn(`Metadata not found for ${dateKey}:`, e.message);
     }
 
-    const formattedDate = formatGameDateUkUa(dateKey);
+    const formattedDate = new Date(dateKey).toLocaleDateString("uk-UA", {
+      weekday: "long", day: "2-digit", month: "2-digit",
+    });
 
     const baseTimeMinutes = parseMinutesFromTime("18:00");
     const playersWithIndex = players.map((player, index) => ({...player, index}));
